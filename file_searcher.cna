@@ -1,0 +1,50 @@
+beacon_command_register(
+   "file_searcher",
+   "Used to search for a specific file in the system",
+
+   "Used to search for a specific file in the system\n\n" .
+
+   "Usage:\n" .
+   "   file_searcher -n [file name]\n\n" .
+
+   "Arguments:\n" .
+   "   \$1 - beacon id (CS automatically adds this argument)\n" .
+   "   \$2 - Flag (-n)\n" .
+   "   \$3 - File name\n\n" .
+
+
+   "Examples:\n" .
+   "   file_searcher -n example.txt\n" .
+   "   file_searcher -n report.docx\n\n"
+);
+
+
+alias file_searcher {
+   local('$bid $barch $handle $data $args $flag $flag_val');
+
+   ($bid, $flag, $flag_val) = @_;
+
+   # figure out the arch of this session
+   $barch  = barch($bid);
+   
+   # read in the right BOF file
+   $handle = openf(script_resource("file_searcher. $+ $barch $+ .o"));
+   $data   = readb($handle, -1);
+   closef($handle);
+
+   if ($flag eq "-n") {
+       $args = bof_pack($bid, "z", $flag_val);
+   } else {
+       btask($bid, "Usage: file_searcher -n <file name>");
+       return;
+   }
+   
+   if($flag_val eq "") {
+       btask($bid, "\nInvalid file name:  " . $flag_val . "\n\tUsage: file_seacher -n <file name>");
+       return;
+   }
+
+   btask($bid, "Running file_searcher on file " . $flag_val);
+   # execute it.
+   beacon_inline_execute($bid, $data, "go", $args);
+}
